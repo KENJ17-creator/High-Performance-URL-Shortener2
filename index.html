@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL短縮サービス</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        input[type="url"] { width: 70%; padding: 10px; }
+        button { padding: 10px 20px; }
+        #resDiv { margin-top: 20px; font-weight: bold; color: #007bff; }
+        .cdn-box { background: #f4f4f4; padding: 15px; margin-top: 20px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>URL短縮サービス</h1>
+    <p>Google Cloudの自動ID、Firestore、Cloud CDNを想定した構成です。</p>
+    
+    <form id="shortenForm">
+        <input type="url" name="url" placeholder="自身のURLを入力" required>
+        <button type="submit">短縮する</button>
+    </form>
+
+    <div id="resDiv"></div>
+
+    <div class="cdn-box">
+        <h3>Cloud CDN アクセス回数のシミュレーション</h3>
+        <p>CDNキャッシュにより負荷を抑えつつ、Firestore側でカウントを安全にインクリメントします。</p>
+        <input type="text" id="targetId" placeholder="短縮IDを入力 (例: r/ 後の文字列)">
+        <button id="countBtn">CDN経由のアクセスをカウント</button>
+        <p id="countStatus"></p>
+    </div>
+
+    <script>
+        document.getElementById('shortenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 指定された変数名へ変更
+            const Fdata = new FormData(e.target);
+            const resDiv = document.getElementById('resDiv');
+            resDiv.innerText = "生成中...";
+
+            try {
+                // 指定された変数名 (rep, t) へ変更
+                const rep = await fetch('/shorten', {
+                    method: 'POST',
+                    body: Fdata
+                });
+                const t = await rep.text();
+                resDiv.innerText = t;
+            } catch (err) {
+                resDiv.innerText = "エラーが発生しました。";
+            }
+        });
+
+        // CDNアクセスシミュレーターの動作
+        document.getElementById('countBtn').addEventListener('submit', async () => {
+            const id = document.getElementById('targetId').value;
+            const status = document.getElementById('countStatus');
+            if(!id) {
+                status.innerText = "IDを入力してください";
+                return;
+            }
+            try {
+                const rep = await fetch(`/countpage?id=${id}`);
+                if(rep.ok) {
+                    status.innerText = `Firestore内の短縮URL[ ${id} ]のアクセス数を +1 しました！`;
+                } else {
+                    status.innerText = "カウントに失敗しました。IDが正しいか確認してください。";
+                }
+            } catch(err) {
+                status.innerText = "通信エラーが発生しました。";
+            }
+        });
+    </script>
+</body>
+</html>
