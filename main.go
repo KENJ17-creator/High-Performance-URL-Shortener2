@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -122,17 +123,21 @@ func Hredirect(w http.ResponseWriter, r *http.Request) {
 
 func Hcountpage(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
+	id = strings.TrimPrefix(id, "r/")
+	id = strings.TrimSpace(id)
+
 	if id == "" {
 		http.Error(w, "IDが必要です", http.StatusBadRequest)
 		return
 	}
 
 	ctx := context.Background()
+
 	_, err := client.Collection("urls").Doc(id).Update(ctx, []firestore.Update{
 		{Path: "access_count", Value: firestore.FieldValue.Increment(1)},
 	})
 	if err != nil {
-		http.Error(w, "カウント更新失敗", http.StatusInternalServerError)
+		http.Error(w, "カウント更新失敗。IDが存在しない可能性があります。", http.StatusInternalServerError)
 		return
 	}
 	w.Write([]byte("Counted"))

@@ -27,7 +27,7 @@
         <h3>Cloud CDN アクセス回数のシミュレーション</h3>
         <p>CDNキャッシュにより負荷を抑えつつ、Firestore側でカウントを安全にインクリメントします。</p>
         <input type="text" id="targetId" placeholder="短縮IDを入力 (例: r/ 後の文字列)">
-        <button id="countBtn">CDN経由のアクセスをカウント</button>
+        <button type="button" id="countBtn">CDN経由のアクセスをカウント</button>
         <p id="countStatus"></p>
     </div>
 
@@ -35,13 +35,11 @@
         document.getElementById('shortenForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // 指定された変数名へ変更
             const Fdata = new FormData(e.target);
             const resDiv = document.getElementById('resDiv');
             resDiv.innerText = "生成中...";
 
             try {
-                // 指定された変数名 (rep, t) へ変更
                 const rep = await fetch('/shorten', {
                     method: 'POST',
                     body: Fdata
@@ -53,14 +51,14 @@
             }
         });
 
-        // CDNアクセスシミュレーターの動作
-        document.getElementById('countBtn').addEventListener('submit', async () => {
+        document.getElementById('countBtn').addEventListener('click', async () => {
             const id = document.getElementById('targetId').value;
             const status = document.getElementById('countStatus');
             if(!id) {
                 status.innerText = "IDを入力してください";
                 return;
             }
+            status.innerText = "カウント中...";
             try {
                 const rep = await fetch(`/countpage?id=${id}`);
                 if(rep.ok) {
